@@ -1,47 +1,90 @@
+import numpy as np
 import pandas as pd
 
+# ICE 美元指数成分权重（用于在缺少真实美元指数代码时近似合成 DXY）
+ICE_DXY_BASE = 50.14348112
+ICE_DXY_WEIGHTS = {
+    "EURUSD": -0.576,
+    "USDJPY": 0.136,
+    "GBPUSD": -0.119,
+    "USDCAD": 0.091,
+    "USDSEK": 0.042,
+    "USDCHF": 0.036,
+}
+
+
 class CCFCalculator:
-    def __init__(self, data: dict):
-        self.data = data
+    """
+    基于历史日线序列计算逆周期因子（向量化）。
 
-    def calculate(self):
+    简化模型（央行真实模型为黑盒，权重可按研究需要调整）：
+        理论中间价 = 前日收盘价 + 篮子货币影响 + 美元指数影响 + 离岸人民币影响
+        逆周期因子 = 实际中间价 - 理论中间价
+    """
+
+    # 模型权重
+    BASKET_BETA = 0.5  # 篮子货币影响弹性
+    DXY_BETA = 0.2     # 美元指数直接影响弹性
+    CNH_BETA = 0.1     # 离岸价差影响弹性
+
+    def __init__(self, df: pd.DataFrame):
+        self.df = df.copy()
+
+    def synthesize_dxy(self, df: pd.DataFrame) -> pd.Series:
+        """按 ICE 权重用 6 个成分货币近似合成美元指数"""
+        dxy = pd.Series(ICE_DXY_BASE, index=df.index, dtype=float)
+        for col, weight in ICE_DXY_WEIGHTS.items():
+            dxy = dxy * df[col].astype(float) ** weight
+        return dxy
+
+    def calculate(self) -> pd.DataFrame:
         """
-        计算逆周期因子。
-        公式简化示意：
-        逆周期因子 = 中间价 - (前日收盘价 + 篮子货币影响 + 美元指数影响 + 离岸人民币影响)
-        注意：此处采用简化权重模型。实际央行模型为黑盒，需您根据具体研究调整权重。
+        计算全历史区间的逆周期因子。
+        :return: DataFrame，含 Date、原始行情、各影响成分、CCF_Value、Strength
         """
-        # 提取数据，需根据 iFind 实际代码对应
-        cny_mid = self.data.get("USDCNY.EX", 7.1000) # 假设中间价
-        cny_spot = self.data.get("USDCNY.FX", 7.1050) # 假设即期收盘
-        cnh = self.data.get("USDCNH.FX", 7.1100)
-        dxy = self.data.get("UDI.FX", 104.00)
-        
-        # 简化计算：前日收盘与中间价的价差作为基准
-        # 假设：篮子影响和美元影响等简化为一个调整值
-        basket_impact = 0.0050 # 示例值
-        dxy_impact = 0.0020    # 示例值
-        cnh_impact = (cnh - cny_spot) * 0.1 # 离岸价差影响的 10%
+        df = self.df
 
-        # 计算逆周期因子
-        ccf_value = cny_mid - (cny_spot + basket_impact + dxy_impact + cnh_impact)
-        
-        # 评级
-        strength = self.evaluate_strength(ccf_value)
-        
-        return {
-            "USDCNY_MID": cny_mid,
-            "USDCNY_SPOT": cny_spot,
-            "USDCNH": cnh,
-            "DXY": dxy,
-            "Basket_Impact": basket_impact,
-            "DXY_Impact": dxy_impact,
-            "CNH_Impact": cnh_impact,
-            "CCF_Value": ccf_value,
-            "Strength": strength
-        }
+        # 美元指数：优先使用真实数据列，否则用 ICE 权重近似合成
+        if "DXY" in df.columns and df["DXY"].notna().any():
+            df["DXY"] = df["DXY"].astype(float)
+        else:
+            df["DXY"] = self.synthesize_dxy(df)
 
-    def evaluate_strength(self, ccf_value: float) -> str:
+        mid = df["USDCNY_MID"].astype(float)
+        spot = df["USDCNY_SPOT"].astype(float)
+        cnh = df["USDCNH"].astype(float)
+
+        prev_spot = spot.shift(1)
+        dxy_chg = df["DXY"].pct_change()
+
+        # 篮子货币影响：优先用 CFETS 指数变动，缺失时回退为美元指数变动代理。
+        # 美元走强时，为维持篮子稳定中间价需上调（人民币贬值方向），故取正号。
+        if "CFETS" in df.columns and df["CFETS"].notna().any():
+            basket_chg = df["CFETS"].astype(float).pct_change()
+            df["Basket_Impact"] = -self.BASKET_BETA * basket_chg * prev_spot
+        else:
+            df["Basket_Impact"] = self.BASKET_BETA * dxy_chg * prev_spot
+
+        # 美元指数直接影响
+        df["DXY_Impact"] = self.DXY_BETA * dxy_chg * prev_spot
+
+        # 离岸价差影响
+        df["CNH_Impact"] = (cnh - spot) * self.CNH_BETA
+
+        # 逆周期因子 = 实际中间价 - 理论中间价
+        df["CCF_Value"] = mid - (prev_spot + df["Basket_Impact"] + df["DXY_Impact"] + df["CNH_Impact"])
+
+        # 强度评级
+        df["Strength"] = df["CCF_Value"].apply(
+            lambda v: self.evaluate_strength(v) if pd.notna(v) else ""
+        )
+
+        # 仅保留可计算出 CCF 的交易日
+        df = df.dropna(subset=["CCF_Value"]).reset_index(drop=True)
+        return df
+
+    @staticmethod
+    def evaluate_strength(ccf_value: float) -> str:
         """评估强度"""
         if abs(ccf_value) > 0.0200:
             return "强"
