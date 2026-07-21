@@ -1,0 +1,36 @@
+name: Daily CCF Calculation
+
+on:
+  schedule:
+    # 每天 UTC 01:15 (即北京时间 09:15) 运行 (仅工作日 周一至周五)
+    - cron: '15 1 * * 1-5'
+  workflow_dispatch: # 允许在 Actions 页面手动触发
+
+jobs:
+  calculate_and_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Main Data Pipeline
+        env:
+          IFIND_REFRESH_TOKEN: ${{ secrets.IFIND_REFRESH_TOKEN }}
+        run: python main.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add ccf_data.csv
+          # 仅当文件发生变化时才提交
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update CCF data [skip ci]" && git push)
