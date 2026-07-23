@@ -364,45 +364,87 @@ st.markdown('<div class="section-label">驱动成分定量归因拆解</div>', u
 col_attr1, col_attr2 = st.columns(2)
 
 with col_attr1:
-    st.markdown("<p style='font-family: Noto Sans SC; color: #00f0ff; font-weight: 700;'>驱动成分历史堆叠图</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-family: Noto Sans SC; color: #00f0ff; font-weight: 700;'>驱动成分历史变动趋势 (单位: 点/BP)</p>", unsafe_allow_html=True)
     fig_impact = go.Figure()
     color_map = {"Basket_Impact": "#00f0ff", "DXY_Impact": "#fcee0a", "CNH_Impact": "#ff0055"}
     label_map = {"Basket_Impact": "一篮子货币影响", "DXY_Impact": "美元指数直接影响", "CNH_Impact": "离岸价差影响"}
 
     for col_name in ["Basket_Impact", "DXY_Impact", "CNH_Impact"]:
         if col_name in df.columns:
-            fig_impact.add_trace(go.Bar(x=df["Date"], y=df[col_name], name=label_map.get(col_name, col_name), marker_color=color_map.get(col_name, "#00f0ff")))
-    fig_impact.update_layout(**CYBER_PLOT_LAYOUT, barmode="relative", hovermode="x unified", title="篮子 / 美元 / 离岸影响（按交易日堆叠）")
+            # 乘以 10000 转换为外汇交易常用的点子/基点 (Pips / BP)
+            bp_series = df[col_name] * 10000
+            fig_impact.add_trace(go.Bar(x=df["Date"], y=bp_series, name=label_map.get(col_name, col_name), marker_color=color_map.get(col_name, "#00f0ff")))
+    fig_impact.update_layout(**CYBER_PLOT_LAYOUT, barmode="relative", hovermode="x unified", title="篮子 / 美元 / 离岸影响历史时间序列 (点/BP)")
     st.plotly_chart(fig_impact, use_container_width=True)
 
 with col_attr2:
-    st.markdown(f"<p style='font-family: Noto Sans SC; color: #00f0ff; font-weight: 700;'>最新一期归因拆解 [{latest_row['Date'].strftime('%Y-%m-%d')}]</p>", unsafe_allow_html=True)
-    categories = ["前日即期基准", "一篮子影响", "美元影响", "离岸价差影响", "逆周期因子"]
-    values = [
-        latest_row["USDCNY_SPOT"],
-        latest_row["Basket_Impact"],
-        latest_row["DXY_Impact"],
-        latest_row["CNH_Impact"],
-        latest_row["CCF_Value"],
-    ]
+    st.markdown(f"<p style='font-family: Noto Sans SC; color: #00f0ff; font-weight: 700;'>最新一期因子贡献对比 [{latest_row['Date'].strftime('%Y-%m-%d')}]</p>", unsafe_allow_html=True)
 
-    fig_waterfall = go.Figure(
-        go.Waterfall(
-            name="归因拆解",
-            orientation="v",
-            measure=["absolute", "relative", "relative", "relative", "total"],
-            x=categories,
-            textposition="outside",
-            text=[f"{v:.4f}" for v in values],
-            y=values,
-            connector={"line": {"color": "rgba(0, 240, 255, 0.5)", "width": 1.5}},
-            increasing={"marker": {"color": "#00ff66"}},
-            decreasing={"marker": {"color": "#ff0055"}},
-            totals={"marker": {"color": "#00f0ff"}},
+    # 将最新一期影响幅度转换为点数 (BP, 1BP = 0.0001)
+    basket_bp = latest_row["Basket_Impact"] * 10000
+    dxy_bp = latest_row["DXY_Impact"] * 10000
+    cnh_bp = latest_row["CNH_Impact"] * 10000
+    ccf_bp = latest_row["CCF_Value"] * 10000
+
+    attr_names = ["一篮子货币影响", "美元指数直接影响", "离岸价差影响", "逆周期因子 (CCF)"]
+    attr_bps = [basket_bp, dxy_bp, cnh_bp, ccf_bp]
+    attr_raws = [latest_row["Basket_Impact"], latest_row["DXY_Impact"], latest_row["CNH_Impact"], latest_row["CCF_Value"]]
+
+    # 条形颜色：正值量子绿 #00ff66（贬值/调升方向），负值赛博红 #ff0055（升值/调降方向），CCF用电光青 #00f0ff / 亮紫 #a855f7
+    colors = []
+    for name, bp in zip(attr_names, attr_bps):
+        if "CCF" in name:
+            colors.append("#00f0ff" if bp >= 0 else "#a855f7")
+        else:
+            colors.append("#00ff66" if bp >= 0 else "#ff0055")
+
+    text_labels = [f"{bp:+.1f} 点 ({raw:+.4f})" for bp, raw in zip(attr_bps, attr_raws)]
+
+    fig_attr_bar = go.Figure(
+        go.Bar(
+            y=attr_names,
+            x=attr_bps,
+            orientation="h",
+            text=text_labels,
+            textposition="auto",
+            marker=dict(color=colors, line=dict(color="rgba(0, 240, 255, 0.4)", width=1)),
         )
     )
-    fig_waterfall.update_layout(**CYBER_PLOT_LAYOUT, title="中间价形成机制瀑布图拆解")
-    st.plotly_chart(fig_waterfall, use_container_width=True)
+
+    fig_attr_bar.add_vline(x=0, line_dash="dash", line_color="rgba(255, 255, 255, 0.4)")
+    fig_attr_bar.update_layout(
+        **CYBER_PLOT_LAYOUT,
+        title="各因子对中间价影响力度对比 (单位: 点/BP)",
+        xaxis_title="影响力度 (正向: 上调/贬值方向 | 负向: 下调/升值对冲)",
+        yaxis=dict(autorange="reversed", gridcolor="rgba(0, 240, 255, 0.08)"),
+    )
+    st.plotly_chart(fig_attr_bar, use_container_width=True)
+
+# 形成机制数学推演 HUD 说明卡片
+prev_spot_val = latest_row["USDCNY_SPOT"]
+mid_val = latest_row["USDCNY_MID"]
+theory_mid = prev_spot_val + latest_row["Basket_Impact"] + latest_row["DXY_Impact"] + latest_row["CNH_Impact"]
+
+st.markdown(
+    f"""
+    <div style="background: rgba(13, 18, 31, 0.85); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 6px; padding: 14px 20px; margin-bottom: 25px;">
+        <div style="font-family: Orbitron, Noto Sans SC; font-size: 0.95rem; color: #00f0ff; font-weight: 700; margin-bottom: 6px;">
+            // 中间价形成机制公式推演 ({latest_row['Date'].strftime('%Y-%m-%d')})
+        </div>
+        <div style="font-family: Noto Sans SC; font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+            前日收盘价 (<b>{prev_spot_val:.4f}</b>) 
+            + 篮子影响 (<b>{basket_bp:+.1f} 点</b>) 
+            + 美元影响 (<b>{dxy_bp:+.1f} 点</b>) 
+            + 离岸影响 (<b>{cnh_bp:+.1f} 点</b>) 
+            = 理论中间价 (<b>{theory_mid:.4f}</b>)<br>
+            实际中间价 (<b>{mid_val:.4f}</b>) - 理论中间价 (<b>{theory_mid:.4f}</b>) 
+            = <span style="color: #00f0ff; font-weight: 700;">逆周期因子 CCF 为 {ccf_bp:+.1f} 点 ({latest_row['CCF_Value']:+.4f})</span> 
+            [干预强度: <span style="color: #fcee0a; font-weight: 700;">{latest_row['Strength']}</span>]
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ================= 数据明细 =================
 st.markdown('<div class="section-label">历史行情数据明细矩阵</div>', unsafe_allow_html=True)
