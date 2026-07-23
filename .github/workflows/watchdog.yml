@@ -1,0 +1,20 @@
+name: Streamlit Watchdog
+
+on:
+  schedule:
+    # 防止 Streamlit Cloud 应用因长时间无访问而休眠。
+    # cron 无法精确表达"每21小时"，此处为每天 UTC 00:47 和 21:47 各访问一次，
+    # 最大间隔 21 小时，小于 Streamlit 的 24 小时无活动休眠阈值。
+    - cron: '47 */21 * * *'
+  workflow_dispatch: # 允许在 Actions 页面手动触发
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit app
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+            "https://litterapper4countercyclical-factor-awhnhtnsfejf5xct4ozmih.streamlit.app/")
+          echo "看板响应: HTTP $STATUS"
+          test "$STATUS" = "200"
