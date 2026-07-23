@@ -34,7 +34,8 @@ class CCFCalculator:
         """按 ICE 权重用 6 个成分货币近似合成美元指数"""
         dxy = pd.Series(ICE_DXY_BASE, index=df.index, dtype=float)
         for col, weight in ICE_DXY_WEIGHTS.items():
-            dxy = dxy * df[col].astype(float) ** weight
+            if col in df.columns and df[col].notna().any():
+                dxy = dxy * (df[col].astype(float) ** weight)
         return dxy
 
     def calculate(self) -> pd.DataFrame:
@@ -58,9 +59,10 @@ class CCFCalculator:
         dxy_chg = df["DXY"].pct_change()
 
         # 篮子货币影响：优先用 CFETS 指数变动，缺失时回退为美元指数变动代理。
-        # 美元走强时，为维持篮子稳定中间价需上调（人民币贬值方向），故取正号。
+        # 注意：CFETS 指数为周频数据，非周五交易日为空，需先做 ffill 前向填充
         if "CFETS" in df.columns and df["CFETS"].notna().any():
-            basket_chg = df["CFETS"].astype(float).pct_change()
+            cfets_series = df["CFETS"].astype(float).ffill()
+            basket_chg = cfets_series.pct_change()
             df["Basket_Impact"] = -self.BASKET_BETA * basket_chg * prev_spot
         else:
             df["Basket_Impact"] = self.BASKET_BETA * dxy_chg * prev_spot
@@ -74,10 +76,12 @@ class CCFCalculator:
         # 逆周期因子 = 实际中间价 - 理论中间价
         df["CCF_Value"] = mid - (prev_spot + df["Basket_Impact"] + df["DXY_Impact"] + df["CNH_Impact"])
 
-        # 强度评级
-        df["Strength"] = df["CCF_Value"].apply(
-            lambda v: self.evaluate_strength(v) if pd.notna(v) else ""
-        )
+        # 强度评级（向量化计算）
+        abs_ccf = df["CCF_Value"].abs()
+        conditions = [abs_ccf > 0.0200, abs_ccf > 0.0050]
+        choices = ["强", "中"]
+        df["Strength"] = np.select(conditions, choices, default="弱")
+        df.loc[df["CCF_Value"].isna(), "Strength"] = ""
 
         # 仅保留可计算出 CCF 的交易日
         df = df.dropna(subset=["CCF_Value"]).reset_index(drop=True)
@@ -85,10 +89,14 @@ class CCFCalculator:
 
     @staticmethod
     def evaluate_strength(ccf_value: float) -> str:
-        """评估强度"""
-        if abs(ccf_value) > 0.0200:
+        """评估强度（单值计算辅助函数）"""
+        if pd.isna(ccf_value):
+            return ""
+        abs_val = abs(ccf_value)
+        if abs_val > 0.0200:
             return "强"
-        elif abs(ccf_value) > 0.0050:
+        elif abs_val > 0.0050:
             return "中"
         else:
             return "弱"
+

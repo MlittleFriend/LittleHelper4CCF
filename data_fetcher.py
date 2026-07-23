@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import pandas as pd
 from datetime import datetime
 
@@ -20,21 +22,38 @@ FX_CODES = {
     "USDCHF": "USDCHF.FX",       # 美元兑瑞郎（ICE 美元指数成分）
 }
 
-# 占位：在 iFind 终端确认真实 thscode 后填入，即自动纳入抓取与计算。
-# 未配置时，美元指数由 calculator 按 ICE 权重用上述 6 个成分货币近似合成；
-# CFETS 不参与篮子影响计算（回退为美元指数代理）。
-DXY_CODE = None    # 美元指数 thscode，例如 "XXXX.XX"
-CFETS_CODE = None  # CFETS 人民币汇率指数 thscode，例如 "XXXX.XX"
+# 已实测可用的指数代码（2026-07-23 验证）：
+# - DINI.FX 为美元指数日线，可直接使用，无需再按 ICE 权重近似合成；
+# - CNYCFETS.Index 为 CFETS 人民币汇率指数，每周五公布一次（周频），
+#   计算时由 calculator 向前填充至日频。
+DXY_CODE = "DINI.FX"         # 美元指数
+CFETS_CODE = "CNYCFETS.Index"  # CFETS 人民币汇率指数（周频）
 
 
 class IFindDataFetcher:
     def __init__(self, refresh_token: str):
         self.refresh_token = refresh_token
         self.access_token = None
+        self.session = self._create_session()
+
+    @staticmethod
+    def _create_session() -> requests.Session:
+        """配置带自动重试与连接池的 HTTP Session"""
+        session = requests.Session()
+        retries = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[500, 502, 503, 504],
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        return session
 
     def get_access_token(self):
         """获取 iFind API access_token"""
-        resp = requests.post(
+        resp = self.session.post(
             f"{BASE_URL}/get_access_token",
             headers={"Content-Type": "application/json", "refresh_token": self.refresh_token},
             timeout=10,
@@ -56,7 +75,7 @@ class IFindDataFetcher:
         """
         if not self.access_token:
             self.get_access_token()
-        resp = requests.post(
+        resp = self.session.post(
             f"{BASE_URL}/cmd_history_quotation",
             headers={"Content-Type": "application/json", "access_token": self.access_token},
             json={
@@ -93,6 +112,7 @@ class IFindDataFetcher:
                 continue
             values = tbl.get("table", {}).get(indicator) or []
             part = pd.DataFrame({"Date": tbl.get("time", []), name: values})
+            part[name] = pd.to_numeric(part[name], errors="coerce")
             df = part if df.empty else df.merge(part, on="Date", how="outer")
 
         if df.empty:
@@ -119,3 +139,4 @@ class IFindDataFetcher:
             code_map["CFETS"] = CFETS_CODE
 
         return self.fetch_history_dataframe(code_map, start_date, end_date)
+

@@ -6,6 +6,10 @@ on:
     - cron: '15 1 * * 1-5'
   workflow_dispatch: # 允许在 Actions 页面手动触发
 
+concurrency:
+  group: ccf-pipeline
+  cancel-in-progress: true
+
 permissions:
   contents: write # 允许 workflow 将更新后的 CSV 推送回仓库
 
@@ -37,3 +41,4 @@ jobs:
           git add ccf_data.csv
           # 仅当文件发生变化时才提交
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update CCF data [skip ci]" && git push)
+
