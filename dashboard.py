@@ -13,34 +13,34 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 注入赛博朋克 / 科技风 HUD CSS
+# 注入金属浅灰科技风 CSS
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
-    /* 全局深色科技风背景 */
+    /* 全局金属浅灰背景 */
     .stApp {
-        background-color: #070b12;
-        color: #e2e8f0;
-        font-family: 'Noto Sans SC', 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%) !important;
+        color: #0f172a !important;
+        font-family: 'Noto Sans SC', sans-serif;
     }
 
     /* 侧边栏样式 */
     section[data-testid="stSidebar"] {
-        background-color: #0d121f !important;
-        border-right: 1px solid rgba(0, 240, 255, 0.15);
+        background-color: #cbd5e1 !important;
+        border-right: 1px solid #94a3b8 !important;
     }
 
     /* 主标题 HUD 风格 */
     .cyber-header {
         position: relative;
         padding: 22px 26px;
-        background: linear-gradient(135deg, rgba(13, 18, 31, 0.9) 0%, rgba(7, 11, 18, 0.95) 100%);
-        border: 1px solid rgba(0, 240, 255, 0.3);
-        border-left: 5px solid #00f0ff;
-        border-radius: 6px;
-        box-shadow: 0 0 30px rgba(0, 240, 255, 0.08);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+        border: 1px solid #94a3b8;
+        border-left: 5px solid #0284c7;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
         margin-bottom: 25px;
     }
 
@@ -49,15 +49,15 @@ st.markdown(
         font-size: 2.1rem;
         font-weight: 900;
         letter-spacing: 1px;
-        color: #00f0ff;
-        text-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+        color: #0284c7;
+        text-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
         margin: 0;
     }
 
     .cyber-subtitle {
-        font-family: 'Noto Sans SC', 'Rajdhani', sans-serif;
+        font-family: 'Noto Sans SC', sans-serif;
         font-size: 0.98rem;
-        color: #94a3b8;
+        color: #475569;
         letter-spacing: 0.5px;
         margin-top: 8px;
     }
@@ -65,19 +65,19 @@ st.markdown(
     /* 实时数据闪烁指示灯 */
     .pulse-dot {
         display: inline-block;
-        width: 8px;
-        height: 8px;
+        width: 9px;
+        height: 9px;
         border-radius: 50%;
-        background-color: #00ff66;
-        box-shadow: 0 0 10px #00ff66;
+        background-color: #16a34a;
+        box-shadow: 0 0 8px #16a34a;
         animation: pulse 1.8s infinite;
         margin-right: 8px;
     }
 
     @keyframes pulse {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.7); }
-        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(0, 255, 102, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
     }
 
     /* 小标题 HUD 风格 */
@@ -85,7 +85,7 @@ st.markdown(
         font-family: 'Noto Sans SC', 'Orbitron', sans-serif;
         font-size: 1.1rem;
         font-weight: 700;
-        color: #00f0ff;
+        color: #0f172a;
         letter-spacing: 1px;
         margin-bottom: 15px;
         display: flex;
@@ -94,7 +94,7 @@ st.markdown(
 
     .section-label::before {
         content: "//";
-        color: #ff0055;
+        color: #0284c7;
         margin-right: 10px;
         font-weight: 900;
         font-family: 'Orbitron';
@@ -108,64 +108,59 @@ st.markdown(
         font-family: 'Orbitron', 'Noto Sans SC', sans-serif;
         font-size: 0.95rem;
         font-weight: 700;
-        letter-spacing: 1px;
     }
 
     .badge-strong {
-        background: rgba(255, 0, 85, 0.15);
-        color: #ff0055;
-        border: 1px solid #ff0055;
-        box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
+        background: rgba(220, 38, 38, 0.12);
+        color: #dc2626;
+        border: 1px solid #dc2626;
     }
 
     .badge-medium {
-        background: rgba(252, 238, 10, 0.15);
-        color: #fcee0a;
-        border: 1px solid #fcee0a;
-        box-shadow: 0 0 12px rgba(252, 238, 10, 0.4);
+        background: rgba(217, 119, 6, 0.12);
+        color: #d97706;
+        border: 1px solid #d97706;
     }
 
     .badge-weak {
-        background: rgba(0, 240, 255, 0.15);
-        color: #00f0ff;
-        border: 1px solid #00f0ff;
-        box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+        background: rgba(2, 132, 199, 0.12);
+        color: #0284c7;
+        border: 1px solid #0284c7;
     }
 
     /* 自定义按钮风格 */
     div.stButton > button, div.stDownloadButton > button {
-        background: linear-gradient(90deg, rgba(0, 240, 255, 0.12) 0%, rgba(168, 85, 247, 0.2) 100%) !important;
-        color: #00f0ff !important;
-        border: 1px solid #00f0ff !important;
-        border-radius: 4px !important;
-        font-family: 'Noto Sans SC', 'Rajdhani', sans-serif !important;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-family: 'Noto Sans SC', sans-serif !important;
         font-weight: 700 !important;
         letter-spacing: 1px !important;
+        box-shadow: 0 2px 10px rgba(2, 132, 199, 0.25) !important;
         transition: all 0.3s ease !important;
     }
 
     div.stButton > button:hover, div.stDownloadButton > button:hover {
-        background: #00f0ff !important;
-        color: #070b12 !important;
-        box-shadow: 0 0 18px rgba(0, 240, 255, 0.6) !important;
+        background: #0369a1 !important;
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4) !important;
     }
 
-    /* Streamlit Metric 组件暗色重置 */
+    /* Streamlit Metric 重置 */
     [data-testid="stMetricValue"] {
         font-family: 'Orbitron', sans-serif !important;
-        color: #ffffff !important;
+        color: #0f172a !important;
     }
 
     [data-testid="stMetricLabel"] {
-        font-family: 'Noto Sans SC', 'Rajdhani', sans-serif !important;
-        color: #94a3b8 !important;
+        font-family: 'Noto Sans SC', sans-serif !important;
+        color: #475569 !important;
         font-size: 0.95rem !important;
-        letter-spacing: 0.5px;
     }
 
     /* 分割线 */
     hr {
-        border-color: rgba(0, 240, 255, 0.15) !important;
+        border-color: #cbd5e1 !important;
     }
     </style>
     """,
@@ -194,7 +189,7 @@ if df_raw.empty:
 with st.sidebar:
     st.markdown('<div class="section-label">控制面板</div>', unsafe_allow_html=True)
 
-    st.markdown("<p style='font-family: Noto Sans SC; color: #94a3b8; font-size: 0.9rem;'>时间范围筛选</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-family: Noto Sans SC; color: #475569; font-size: 0.9rem;'>时间范围筛选</p>", unsafe_allow_html=True)
     time_preset = st.radio(
         "快捷选择区间",
         ["近1个月", "近3个月", "近1年", "全部", "自定义"],
@@ -253,7 +248,7 @@ st.markdown(
     <div class="cyber-header">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div class="cyber-title">逆周期因子分析小帮手</div>
-            <div style="font-family: Orbitron, Noto Sans SC; font-size: 0.85rem; color: #00ff66;">
+            <div style="font-family: Orbitron, Noto Sans SC; font-size: 0.85rem; color: #16a34a; font-weight: 700;">
                 <span class="pulse-dot"></span>实时行情流
             </div>
         </div>
@@ -266,24 +261,24 @@ st.markdown(
 latest_row = df_raw.iloc[-1]
 prev_row = df_raw.iloc[-2] if len(df_raw) > 1 else latest_row
 
-# 统一 Plotly 暗色 Cyber 主题布局参数
+# 统一 Plotly 金属浅灰主题布局参数
 CYBER_PLOT_LAYOUT = dict(
-    paper_bgcolor="#070b12",
-    plot_bgcolor="#0d121f",
-    font=dict(family="Noto Sans SC, Rajdhani, sans-serif", color="#cbd5e1", size=13),
+    paper_bgcolor="rgba(255, 255, 255, 0.6)",
+    plot_bgcolor="#ffffff",
+    font=dict(family="Noto Sans SC, Rajdhani, sans-serif", color="#1e293b", size=13),
     xaxis=dict(
-        gridcolor="rgba(0, 240, 255, 0.08)",
-        zerolinecolor="rgba(0, 240, 255, 0.2)",
-        linecolor="rgba(0, 240, 255, 0.3)",
+        gridcolor="#f1f5f9",
+        zerolinecolor="#cbd5e1",
+        linecolor="#94a3b8",
     ),
     yaxis=dict(
-        gridcolor="rgba(0, 240, 255, 0.08)",
-        zerolinecolor="rgba(0, 240, 255, 0.2)",
-        linecolor="rgba(0, 240, 255, 0.3)",
+        gridcolor="#f1f5f9",
+        zerolinecolor="#cbd5e1",
+        linecolor="#94a3b8",
     ),
     legend=dict(
-        bgcolor="rgba(13, 18, 31, 0.8)",
-        bordercolor="rgba(0, 240, 255, 0.3)",
+        bgcolor="rgba(255, 255, 255, 0.9)",
+        bordercolor="#cbd5e1",
         borderwidth=1,
     ),
     margin=dict(l=30, r=30, t=50, b=30),
@@ -311,7 +306,7 @@ with col3:
     st.markdown(
         f"""
         <div style="padding-top: 4px;">
-            <div style="font-family: Noto Sans SC; color: #94a3b8; font-size: 0.95rem; letter-spacing: 0.5px;">干预强度评级</div>
+            <div style="font-family: Noto Sans SC; color: #475569; font-size: 0.95rem;">干预强度评级</div>
             <div style="margin-top: 10px;"><span class="badge-cyber {badge_cls}">{strength_val} 评级 / LEVEL {strength_val}</span></div>
         </div>
         """,
@@ -336,8 +331,8 @@ fig_trend = px.line(
     markers=True,
     line_shape="spline",
 )
-fig_trend.update_traces(line_color="#00f0ff", line_width=2.5, marker=dict(size=5, color="#ff0055"))
-fig_trend.add_hline(y=0, line_dash="dash", line_color="#ff0055", annotation_text="0 轴中性基准", annotation_font_color="#ff0055")
+fig_trend.update_traces(line_color="#0284c7", line_width=2.5, marker=dict(size=5, color="#dc2626"))
+fig_trend.add_hline(y=0, line_dash="dash", line_color="#dc2626", annotation_text="0 轴中性基准", annotation_font_color="#dc2626")
 fig_trend.update_layout(**CYBER_PLOT_LAYOUT, title="逆周期因子 (CCF) 时间序列动态走势", hovermode="x unified")
 st.plotly_chart(fig_trend, use_container_width=True)
 
@@ -346,16 +341,16 @@ col_chart1, col_chart2 = st.columns(2)
 with col_chart1:
     st.markdown('<div class="section-label">人民币汇率走势对比</div>', unsafe_allow_html=True)
     fig_fx = go.Figure()
-    fig_fx.add_trace(go.Scatter(x=df["Date"], y=df["USDCNY_MID"], name="中间价", mode="lines", line=dict(color="#00f0ff", width=2)))
-    fig_fx.add_trace(go.Scatter(x=df["Date"], y=df["USDCNY_SPOT"], name="在岸即期", mode="lines", line=dict(color="#ff0055", width=2)))
-    fig_fx.add_trace(go.Scatter(x=df["Date"], y=df["USDCNH"], name="离岸 CNH", mode="lines", line=dict(color="#00ff66", width=2)))
+    fig_fx.add_trace(go.Scatter(x=df["Date"], y=df["USDCNY_MID"], name="中间价", mode="lines", line=dict(color="#0284c7", width=2)))
+    fig_fx.add_trace(go.Scatter(x=df["Date"], y=df["USDCNY_SPOT"], name="在岸即期", mode="lines", line=dict(color="#dc2626", width=2)))
+    fig_fx.add_trace(go.Scatter(x=df["Date"], y=df["USDCNH"], name="离岸 CNH", mode="lines", line=dict(color="#16a34a", width=2)))
     fig_fx.update_layout(**CYBER_PLOT_LAYOUT, title="USDCNY 中间价 / 在岸即期 / 离岸 CNH 综合对比", hovermode="x unified")
     st.plotly_chart(fig_fx, use_container_width=True)
 
 with col_chart2:
     st.markdown('<div class="section-label">美元指数走势分析</div>', unsafe_allow_html=True)
     fig_dxy = px.line(df, x="Date", y="DXY")
-    fig_dxy.update_traces(line_color="#fcee0a", line_width=2)
+    fig_dxy.update_traces(line_color="#d97706", line_width=2)
     fig_dxy.update_layout(**CYBER_PLOT_LAYOUT, title="美元指数 (DXY) 历史时间序列", hovermode="x unified")
     st.plotly_chart(fig_dxy, use_container_width=True)
 
@@ -364,23 +359,21 @@ st.markdown('<div class="section-label">驱动成分定量归因拆解</div>', u
 col_attr1, col_attr2 = st.columns(2)
 
 with col_attr1:
-    st.markdown("<p style='font-family: Noto Sans SC; color: #00f0ff; font-weight: 700;'>驱动成分历史变动趋势 (单位: 点/BP)</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-family: Noto Sans SC; color: #0284c7; font-weight: 700;'>驱动成分历史变动趋势 (单位: 点/BP)</p>", unsafe_allow_html=True)
     fig_impact = go.Figure()
-    color_map = {"Basket_Impact": "#00f0ff", "DXY_Impact": "#fcee0a", "CNH_Impact": "#ff0055"}
+    color_map = {"Basket_Impact": "#0284c7", "DXY_Impact": "#d97706", "CNH_Impact": "#dc2626"}
     label_map = {"Basket_Impact": "一篮子货币影响", "DXY_Impact": "美元指数直接影响", "CNH_Impact": "离岸价差影响"}
 
     for col_name in ["Basket_Impact", "DXY_Impact", "CNH_Impact"]:
         if col_name in df.columns:
-            # 乘以 10000 转换为外汇交易常用的点子/基点 (Pips / BP)
             bp_series = df[col_name] * 10000
-            fig_impact.add_trace(go.Bar(x=df["Date"], y=bp_series, name=label_map.get(col_name, col_name), marker_color=color_map.get(col_name, "#00f0ff")))
+            fig_impact.add_trace(go.Bar(x=df["Date"], y=bp_series, name=label_map.get(col_name, col_name), marker_color=color_map.get(col_name, "#0284c7")))
     fig_impact.update_layout(**CYBER_PLOT_LAYOUT, barmode="relative", hovermode="x unified", title="篮子 / 美元 / 离岸影响历史时间序列 (点/BP)")
     st.plotly_chart(fig_impact, use_container_width=True)
 
 with col_attr2:
-    st.markdown(f"<p style='font-family: Noto Sans SC; color: #00f0ff; font-weight: 700;'>最新一期因子贡献对比 [{latest_row['Date'].strftime('%Y-%m-%d')}]</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-family: Noto Sans SC; color: #0284c7; font-weight: 700;'>最新一期因子贡献对比 [{latest_row['Date'].strftime('%Y-%m-%d')}]</p>", unsafe_allow_html=True)
 
-    # 将最新一期影响幅度转换为点数 (BP, 1BP = 0.0001)
     basket_bp = latest_row["Basket_Impact"] * 10000
     dxy_bp = latest_row["DXY_Impact"] * 10000
     cnh_bp = latest_row["CNH_Impact"] * 10000
@@ -390,13 +383,12 @@ with col_attr2:
     attr_bps = [basket_bp, dxy_bp, cnh_bp, ccf_bp]
     attr_raws = [latest_row["Basket_Impact"], latest_row["DXY_Impact"], latest_row["CNH_Impact"], latest_row["CCF_Value"]]
 
-    # 条形颜色：正值量子绿 #00ff66（贬值/调升方向），负值赛博红 #ff0055（升值/调降方向），CCF用电光青 #00f0ff / 亮紫 #a855f7
     colors = []
     for name, bp in zip(attr_names, attr_bps):
         if "CCF" in name:
-            colors.append("#00f0ff" if bp >= 0 else "#a855f7")
+            colors.append("#0284c7" if bp >= 0 else "#7c3aed")
         else:
-            colors.append("#00ff66" if bp >= 0 else "#ff0055")
+            colors.append("#16a34a" if bp >= 0 else "#dc2626")
 
     text_labels = [f"{bp:+.1f} 点 ({raw:+.4f})" for bp, raw in zip(attr_bps, attr_raws)]
 
@@ -407,11 +399,11 @@ with col_attr2:
             orientation="h",
             text=text_labels,
             textposition="auto",
-            marker=dict(color=colors, line=dict(color="rgba(0, 240, 255, 0.4)", width=1)),
+            marker=dict(color=colors, line=dict(color="rgba(15, 23, 42, 0.15)", width=1)),
         )
     )
 
-    fig_attr_bar.add_vline(x=0, line_dash="dash", line_color="rgba(255, 255, 255, 0.4)")
+    fig_attr_bar.add_vline(x=0, line_dash="dash", line_color="rgba(15, 23, 42, 0.4)")
     fig_attr_bar.update_layout(
         **CYBER_PLOT_LAYOUT,
         title="各因子对中间价影响力度对比 (单位: 点/BP)",
@@ -427,19 +419,19 @@ theory_mid = prev_spot_val + latest_row["Basket_Impact"] + latest_row["DXY_Impac
 
 st.markdown(
     f"""
-    <div style="background: rgba(13, 18, 31, 0.85); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 6px; padding: 14px 20px; margin-bottom: 25px;">
-        <div style="font-family: Orbitron, Noto Sans SC; font-size: 0.95rem; color: #00f0ff; font-weight: 700; margin-bottom: 6px;">
+    <div style="background: rgba(255, 255, 255, 0.9); border: 1px solid #94a3b8; border-radius: 6px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);">
+        <div style="font-family: Orbitron, Noto Sans SC; font-size: 0.95rem; color: #0284c7; font-weight: 700; margin-bottom: 6px;">
             // 中间价形成机制公式推演 ({latest_row['Date'].strftime('%Y-%m-%d')})
         </div>
-        <div style="font-family: Noto Sans SC; font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+        <div style="font-family: Noto Sans SC; font-size: 0.9rem; color: #334155; line-height: 1.6;">
             前日收盘价 (<b>{prev_spot_val:.4f}</b>) 
             + 篮子影响 (<b>{basket_bp:+.1f} 点</b>) 
             + 美元影响 (<b>{dxy_bp:+.1f} 点</b>) 
             + 离岸影响 (<b>{cnh_bp:+.1f} 点</b>) 
             = 理论中间价 (<b>{theory_mid:.4f}</b>)<br>
             实际中间价 (<b>{mid_val:.4f}</b>) - 理论中间价 (<b>{theory_mid:.4f}</b>) 
-            = <span style="color: #00f0ff; font-weight: 700;">逆周期因子 CCF 为 {ccf_bp:+.1f} 点 ({latest_row['CCF_Value']:+.4f})</span> 
-            [干预强度: <span style="color: #fcee0a; font-weight: 700;">{latest_row['Strength']}</span>]
+            = <span style="color: #0284c7; font-weight: 700;">逆周期因子 CCF 为 {ccf_bp:+.1f} 点 ({latest_row['CCF_Value']:+.4f})</span> 
+            [干预强度: <span style="color: #d97706; font-weight: 700;">{latest_row['Strength']}</span>]
         </div>
     </div>
     """,
