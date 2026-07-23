@@ -23,7 +23,7 @@ BASE_COLUMNS = [
     "EURUSD", "USDJPY", "Basket_Impact", "DXY_Impact", "CNH_Impact",
     "CCF_Value", "Strength",
 ]
-OPTIONAL_COLUMNS = ["CFETS", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"]
+OPTIONAL_COLUMNS = ["CFETS", "US10Y", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"]
 
 
 def parse_args():

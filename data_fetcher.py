@@ -28,6 +28,7 @@ FX_CODES = {
 #   计算时由 calculator 向前填充至日频。
 DXY_CODE = "DINI.FX"         # 美元指数
 CFETS_CODE = "CNYCFETS.Index"  # CFETS 人民币汇率指数（周频）
+US10Y_CODE = "US10Y.GI"      # 10年期美国国债收益率
 
 
 class IFindDataFetcher:
@@ -125,9 +126,9 @@ class IFindDataFetcher:
     def get_fx_data_for_ccf(self, start_date: str = DEFAULT_START_DATE,
                             end_date: str = None) -> pd.DataFrame:
         """
-        抓取计算逆周期因子所需的全部外汇日线数据。
-        包含：USDCNY 中间价/即期、USDCNH、ICE 美元指数 6 个成分货币，
-        以及（若已配置真实代码）美元指数与 CFETS 指数。
+        抓取计算逆周期因子所需的全部外汇日线数据与收益率指标。
+        包含：USDCNY 中间价/即期、USDCNH、ICE 美元指数 6 个成分货币、
+        美元指数、CFETS 指数以及 10年期美债收益率。
         :return: 宽表 DataFrame，含 Date 列，按日期升序
         """
         end_date = end_date or datetime.now().strftime("%Y-%m-%d")
@@ -137,6 +138,8 @@ class IFindDataFetcher:
             code_map["DXY"] = DXY_CODE
         if CFETS_CODE:
             code_map["CFETS"] = CFETS_CODE
+        if US10Y_CODE:
+            code_map["US10Y"] = US10Y_CODE
 
         return self.fetch_history_dataframe(code_map, start_date, end_date)
 

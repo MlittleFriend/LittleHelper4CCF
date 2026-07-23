@@ -286,7 +286,13 @@ CYBER_PLOT_LAYOUT = dict(
 
 # ================= 核心指标区 =================
 st.markdown(f'<div class="section-label">今日行情概览 [{latest_row["Date"].strftime("%Y-%m-%d")}]</div>', unsafe_allow_html=True)
-col1, col2, col3, col4 = st.columns(4)
+
+has_us10y = "US10Y" in df.columns and pd.notna(latest_row.get("US10Y"))
+
+if has_us10y:
+    col1, col2, col3, col4, col5 = st.columns(5)
+else:
+    col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.metric(
@@ -318,6 +324,16 @@ with col4:
         value=f"{latest_row['DXY']:.2f}",
         delta=f"{latest_row['DXY'] - prev_row['DXY']:.2f}",
     )
+
+if has_us10y:
+    with col5:
+        us10y_curr = latest_row['US10Y']
+        us10y_prev = prev_row.get('US10Y', us10y_curr)
+        st.metric(
+            label="10年美债收益率 (US10Y)",
+            value=f"{us10y_curr:.2f}%",
+            delta=f"{us10y_curr - us10y_prev:.2f}%",
+        )
 
 st.divider()
 
@@ -446,6 +462,7 @@ format_map = {
     "USDCNY_SPOT": "{:.4f}",
     "USDCNH": "{:.4f}",
     "DXY": "{:.2f}",
+    "US10Y": "{:.2f}%",
     "EURUSD": "{:.4f}",
     "USDJPY": "{:.2f}",
     "GBPUSD": "{:.4f}",
