@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 from data_fetcher import IFindDataFetcher, DEFAULT_START_DATE
 from calculator import CCFCalculator
@@ -21,7 +22,8 @@ def main():
     print(f"[{datetime.now()}] 启动逆周期因子计算流水线...")
 
     if REFRESH_TOKEN == "YOUR_TEST_TOKEN_HERE":
-        print("警告：未使用真实的环境变量 IFIND_REFRESH_TOKEN。如果是本地运行，请在代码中替换或配置环境变量。")
+        print("错误：未配置环境变量 IFIND_REFRESH_TOKEN，无法运行。")
+        sys.exit(1)
 
     fetcher = IFindDataFetcher(REFRESH_TOKEN)
 
@@ -31,7 +33,7 @@ def main():
         print(f"   成功获取 {len(fx_df)} 个交易日的外汇数据")
     except Exception as e:
         print(f"数据拉取失败: {e}")
-        return
+        sys.exit(1)  # 非零退出码，让 GitHub Actions 正确标记失败
 
     print("2. 正在计算逆周期因子...")
     calculator = CCFCalculator(fx_df)
