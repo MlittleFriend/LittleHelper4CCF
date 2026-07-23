@@ -7,7 +7,7 @@ import streamlit as st
 
 # 页面基本设置
 st.set_page_config(
-    page_title="逆周期因子定量分析终端 | CCF TERMINAL",
+    page_title="逆周期因子分析小帮手 | CCF TERMINAL",
     layout="wide",
     page_icon=None,
     initial_sidebar_state="expanded",
