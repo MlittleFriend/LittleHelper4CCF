@@ -416,8 +416,8 @@ with col_attr2:
         **CYBER_PLOT_LAYOUT,
         title="各因子对中间价影响力度对比 (单位: 点/BP)",
         xaxis_title="影响力度 (正向: 上调/贬值方向 | 负向: 下调/升值对冲)",
-        yaxis=dict(autorange="reversed", gridcolor="rgba(0, 240, 255, 0.08)"),
     )
+    fig_attr_bar.update_yaxes(autorange="reversed")
     st.plotly_chart(fig_attr_bar, use_container_width=True)
 
 # 形成机制数学推演 HUD 说明卡片
