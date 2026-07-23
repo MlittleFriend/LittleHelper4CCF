@@ -252,7 +252,7 @@ st.markdown(
     f"""
     <div class="cyber-header">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="cyber-title">逆周期因子定量分析终端</div>
+            <div class="cyber-title">逆周期因子分析小帮手</div>
             <div style="font-family: Orbitron, Noto Sans SC; font-size: 0.85rem; color: #00ff66;">
                 <span class="pulse-dot"></span>实时行情流
             </div>
