@@ -4,9 +4,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os
 
-st.set_page_config(page_title="逆周期因子云端看板", layout="wide", page_icon="📈")
+st.set_page_config(page_title="小帮手CCF", layout="wide", page_icon="📈")
 
-st.title("📈 逆周期因子 (CCF) 自动测算看板")
+st.title("📈 逆周期因子小帮手")
 st.markdown("自动追踪人民币汇率每日中间价、计算逆周期因子，并对汇率影响成分进行归因拆解。")
 
 DATA_FILE = "ccf_data.csv"
