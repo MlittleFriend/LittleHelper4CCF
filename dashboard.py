@@ -49,9 +49,8 @@ st.markdown(
         font-size: 2.1rem;
         font-weight: 900;
         letter-spacing: 1px;
-        background: linear-gradient(90deg, #00f0ff 0%, #a855f7 50%, #ff0055 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #00f0ff;
+        text-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
         margin: 0;
     }
 
