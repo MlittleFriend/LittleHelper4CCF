@@ -43,7 +43,7 @@ class CCFCalculator:
         计算全历史区间的逆周期因子。
         :return: DataFrame，含 Date、原始行情、各影响成分、CCF_Value、Strength
         """
-        df = self.df
+        df = self.df.dropna(subset=["USDCNY_MID", "USDCNY_SPOT"]).copy()
 
         # 美元指数：优先使用真实数据列，否则用 ICE 权重近似合成
         if "DXY" in df.columns and df["DXY"].notna().any():

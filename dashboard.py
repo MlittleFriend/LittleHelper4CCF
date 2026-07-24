@@ -170,8 +170,12 @@ st.markdown(
 DATA_FILE = "ccf_data.csv"
 
 
-@st.cache_data(ttl=3600)
-def load_data():
+def get_file_mtime(filepath):
+    return os.path.getmtime(filepath) if os.path.exists(filepath) else 0
+
+
+@st.cache_data(ttl=300)
+def load_data(mtime):
     if not os.path.exists(DATA_FILE):
         return pd.DataFrame()
     df = pd.read_csv(DATA_FILE)
@@ -179,7 +183,8 @@ def load_data():
     return df
 
 
-df_raw = load_data()
+file_mtime = get_file_mtime(DATA_FILE)
+df_raw = load_data(file_mtime)
 
 if df_raw.empty:
     st.error("严重错误：未找到数据文件。请先运行 main.py 生成 ccf_data.csv")
@@ -223,6 +228,58 @@ with st.sidebar:
             start_date, end_date = date_range
         else:
             start_date, end_date = min_date, max_date
+
+    st.divider()
+    st.markdown('<div class="section-label">数据控制与刷新</div>', unsafe_allow_html=True)
+
+    if os.path.exists(DATA_FILE):
+        mtime_dt = datetime.fromtimestamp(os.path.getmtime(DATA_FILE))
+        st.caption(f"数据最后更新: {mtime_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("🔄 刷新缓存", help="重新载入本地数据文件缓存"):
+            st.cache_data.clear()
+            st.rerun()
+
+    # 检查是否有 IFIND_REFRESH_TOKEN（环境变量或 st.secrets）
+    refresh_token = os.environ.get("IFIND_REFRESH_TOKEN")
+    try:
+        if not refresh_token and "IFIND_REFRESH_TOKEN" in st.secrets:
+            refresh_token = st.secrets["IFIND_REFRESH_TOKEN"]
+    except Exception:
+        pass
+
+    if refresh_token:
+        with col_btn2:
+            if st.button("🚀 抓取最新", help="使用配置的 Token 立即在线抓取 iFind 最新行情"):
+                with st.spinner("正在抓取最新行情数据..."):
+                    try:
+                        from data_fetcher import IFindDataFetcher, DEFAULT_START_DATE
+                        from calculator import CCFCalculator
+                        fetcher = IFindDataFetcher(refresh_token)
+                        fx_df = fetcher.get_fx_data_for_ccf(start_date=DEFAULT_START_DATE)
+                        calculator = CCFCalculator(fx_df)
+                        result_df = calculator.calculate()
+                        if not result_df.empty:
+                            BASE_COLUMNS = [
+                                "Date", "USDCNY_MID", "USDCNY_SPOT", "USDCNH", "DXY",
+                                "EURUSD", "USDJPY", "Basket_Impact", "DXY_Impact", "CNH_Impact",
+                                "CCF_Value", "Strength",
+                            ]
+                            OPTIONAL_COLUMNS = ["CFETS", "US10Y", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"]
+                            columns = list(BASE_COLUMNS)
+                            for col in OPTIONAL_COLUMNS:
+                                if col in result_df.columns and result_df[col].notna().any():
+                                    columns.insert(5, col)
+                            out_df = result_df[columns].copy()
+                            out_df["Date"] = out_df["Date"].dt.strftime("%Y-%m-%d")
+                            out_df.to_csv(DATA_FILE, index=False, encoding="utf-8", float_format="%.6f")
+                            st.cache_data.clear()
+                            st.success("数据更新成功！")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"抓取失败: {e}")
 
     st.divider()
     st.markdown('<div class="section-label">数据导出</div>', unsafe_allow_html=True)
@@ -429,7 +486,7 @@ with col_attr2:
     st.plotly_chart(fig_attr_bar, use_container_width=True)
 
 # 形成机制数学推演 HUD 说明卡片
-prev_spot_val = latest_row["USDCNY_SPOT"]
+prev_spot_val = prev_row["USDCNY_SPOT"]
 mid_val = latest_row["USDCNY_MID"]
 theory_mid = prev_spot_val + latest_row["Basket_Impact"] + latest_row["DXY_Impact"] + latest_row["CNH_Impact"]
 
