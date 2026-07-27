@@ -14,14 +14,14 @@ jobs:
     steps:
       - name: Ping Streamlit app
         run: |
-          STATUS=$(curl -sL -o /dev/null -w "%{http_code}" --max-time 60 \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
             -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
             "https://litterapper4countercyclical-factor-awhnhtnsfejf5xct4ozmih.streamlit.app/")
           echo "看板响应: HTTP $STATUS"
           if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
-            echo "看板可用 (HTTP $STATUS)"
+            echo "看板存活/可达 (HTTP $STATUS)"
             exit 0
           else
-            echo "看板异常 (HTTP $STATUS)"
+            echo "看板响应异常 (HTTP $STATUS)"
             exit 1
           fi
