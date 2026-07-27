@@ -167,24 +167,25 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+RAW_DATA_URL = "https://raw.githubusercontent.com/MlittleFriend/LittleHelper4CCF/main/ccf_data.csv"
 DATA_FILE = "ccf_data.csv"
 
 
-def get_file_mtime(filepath):
-    return os.path.getmtime(filepath) if os.path.exists(filepath) else 0
-
-
 @st.cache_data(ttl=300)
-def load_data(mtime):
-    if not os.path.exists(DATA_FILE):
-        return pd.DataFrame()
-    df = pd.read_csv(DATA_FILE)
+def load_data():
+    # 优先读取 GitHub Raw 仓库最新数据，避免 GitHub Actions 更新后需要手动 Reboot 容器
+    try:
+        df = pd.read_csv(RAW_DATA_URL)
+    except Exception:
+        if os.path.exists(DATA_FILE):
+            df = pd.read_csv(DATA_FILE)
+        else:
+            return pd.DataFrame()
     df["Date"] = pd.to_datetime(df["Date"])
     return df
 
 
-file_mtime = get_file_mtime(DATA_FILE)
-df_raw = load_data(file_mtime)
+df_raw = load_data()
 
 if df_raw.empty:
     st.error("严重错误：未找到数据文件。请先运行 main.py 生成 ccf_data.csv")
@@ -232,13 +233,13 @@ with st.sidebar:
     st.divider()
     st.markdown('<div class="section-label">数据控制与刷新</div>', unsafe_allow_html=True)
 
-    if os.path.exists(DATA_FILE):
-        mtime_dt = datetime.fromtimestamp(os.path.getmtime(DATA_FILE))
-        st.caption(f"数据最后更新: {mtime_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+    if not df_raw.empty:
+        latest_date_str = df_raw["Date"].max().strftime("%Y-%m-%d")
+        st.caption(f"最新数据日期: {latest_date_str}")
 
     col_btn1, col_btn2 = st.columns(2)
     with col_btn1:
-        if st.button("🔄 刷新缓存", help="重新载入本地数据文件缓存"):
+        if st.button("🔄 刷新缓存", help="立即拉取 GitHub 最新数据并刷新"):
             st.cache_data.clear()
             st.rerun()
 
