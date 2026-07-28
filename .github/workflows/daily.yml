@@ -2,7 +2,9 @@ name: Daily CCF Calculation
 
 on:
   schedule:
-    # 每天 UTC 09:40 (即北京时间 17:40) 运行 (仅工作日 周一至周五，预留缓冲时间防数据库延迟)
+    # 盘中早盘 (北京时间 09:40，PBOC 09:15 公布中间价后，UTC 01:40)
+    - cron: '40 1 * * 1-5'
+    # 盘后结算 (北京时间 17:40，外汇指标全量更新后，UTC 09:40)
     - cron: '40 9 * * 1-5'
   workflow_dispatch: # 允许在 Actions 页面手动触发
 

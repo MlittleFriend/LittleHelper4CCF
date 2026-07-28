@@ -43,7 +43,12 @@ class CCFCalculator:
         计算全历史区间的逆周期因子。
         :return: DataFrame，含 Date、原始行情、各影响成分、CCF_Value、Strength
         """
-        df = self.df.dropna(subset=["USDCNY_MID", "USDCNY_SPOT"]).copy()
+        df = self.df.dropna(subset=["USDCNY_MID"]).copy()
+
+        # 对行情数据做前向填充（防止最新一日盘中 USDCNY_SPOT 或 CNH 尚无收盘价导致最新一期 CCF 被丢弃）
+        for col in ["USDCNY_SPOT", "USDCNH", "DXY", "CFETS", "EURUSD", "USDJPY", "GBPUSD", "USDCAD", "USDSEK", "USDCHF"]:
+            if col in df.columns:
+                df[col] = df[col].ffill()
 
         # 美元指数：优先使用真实数据列，否则用 ICE 权重近似合成
         if "DXY" in df.columns and df["DXY"].notna().any():
@@ -56,13 +61,13 @@ class CCFCalculator:
         cnh = df["USDCNH"].astype(float)
 
         prev_spot = spot.shift(1)
-        dxy_chg = df["DXY"].pct_change()
+        dxy_chg = df["DXY"].pct_change().fillna(0)
 
         # 篮子货币影响：优先用 CFETS 指数变动，缺失时回退为美元指数变动代理。
         # 注意：CFETS 指数为周频数据，非周五交易日为空，需先做 ffill 前向填充
         if "CFETS" in df.columns and df["CFETS"].notna().any():
             cfets_series = df["CFETS"].astype(float).ffill()
-            basket_chg = cfets_series.pct_change()
+            basket_chg = cfets_series.pct_change().fillna(0)
             df["Basket_Impact"] = -self.BASKET_BETA * basket_chg * prev_spot
         else:
             df["Basket_Impact"] = self.BASKET_BETA * dxy_chg * prev_spot

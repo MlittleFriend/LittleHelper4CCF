@@ -1,4 +1,6 @@
+import io
 import os
+import requests
 from datetime import datetime, timedelta
 import pandas as pd
 import plotly.express as px
@@ -171,18 +173,25 @@ RAW_DATA_URL = "https://raw.githubusercontent.com/MlittleFriend/LittleHelper4CCF
 DATA_FILE = "ccf_data.csv"
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def load_data():
-    # 优先读取 GitHub Raw 仓库最新数据，避免 GitHub Actions 更新后需要手动 Reboot 容器
+    # 优先读取 GitHub Raw 仓库最新数据（带 Cache Buster 参数与 User-Agent 防 CDN 强缓存与拦截）
     try:
-        df = pd.read_csv(RAW_DATA_URL)
+        url = f"{RAW_DATA_URL}?t={int(datetime.now().timestamp())}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            df = pd.read_csv(io.StringIO(resp.text))
+            df["Date"] = pd.to_datetime(df["Date"])
+            return df
     except Exception:
-        if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE)
-        else:
-            return pd.DataFrame()
-    df["Date"] = pd.to_datetime(df["Date"])
-    return df
+        pass
+
+    if os.path.exists(DATA_FILE):
+        df = pd.read_csv(DATA_FILE)
+        df["Date"] = pd.to_datetime(df["Date"])
+        return df
+    return pd.DataFrame()
 
 
 df_raw = load_data()
