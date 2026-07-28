@@ -169,24 +169,40 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-RAW_DATA_URL = "https://raw.githubusercontent.com/MlittleFriend/LittleHelper4CCF/main/ccf_data.csv"
+RAW_DATA_URL = "https://raw.githubusercontent.com/MlittleFriend/LittleHelper4CCF"
 DATA_FILE = "ccf_data.csv"
 
 
 @st.cache_data(ttl=60)
 def load_data():
-    # 优先读取 GitHub Raw 仓库最新数据（带 Cache Buster 参数与 User-Agent 防 CDN 强缓存与拦截）
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    # 1. 优先通过 GitHub API 获取 main 分支最新 Commit SHA，彻底绕过 Fastly CDN 强缓存
     try:
-        url = f"{RAW_DATA_URL}?t={int(datetime.now().timestamp())}"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code == 200:
-            df = pd.read_csv(io.StringIO(resp.text))
+        api_url = "https://api.github.com/repos/MlittleFriend/LittleHelper4CCF/commits/main"
+        sha_res = requests.get(api_url, headers=headers, timeout=5)
+        if sha_res.status_code == 200:
+            sha = sha_res.json()["sha"]
+            raw_url = f"{RAW_DATA_URL}/{sha}/ccf_data.csv"
+            res = requests.get(raw_url, headers=headers, timeout=10)
+            if res.status_code == 200:
+                df = pd.read_csv(io.StringIO(res.text))
+                df["Date"] = pd.to_datetime(df["Date"])
+                return df
+    except Exception:
+        pass
+
+    # 2. 回退到直接请求 Raw main URL (带时间戳)
+    try:
+        raw_url = f"{RAW_DATA_URL}/main/ccf_data.csv?t={int(datetime.now().timestamp())}"
+        res = requests.get(raw_url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            df = pd.read_csv(io.StringIO(res.text))
             df["Date"] = pd.to_datetime(df["Date"])
             return df
     except Exception:
         pass
 
+    # 3. 本地 fallback
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
         df["Date"] = pd.to_datetime(df["Date"])
